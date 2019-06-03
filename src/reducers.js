@@ -1,4 +1,29 @@
 
+import { getTodo } from './getTodo'
+
+const generateID = (start, end) => {
+  return Math.random().toString(36).substring(start, end) + Math.random().toString(36).substring(start, end) +  Math.random().toString(36).substring(start, end);
+}
+
+
+const randomCardKey = (length) => {
+  var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+
+  if (!length) {
+      length = Math.floor(Math.random() * chars.length);
+  }
+
+  var str = '';
+  for (var i = 0; i < length; i++) {
+      str += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return str;
+}
+
+const randomKey = () => {
+  return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(2, 10);
+}
+
 export const app = (state = initialState, action) => {
   switch(action.type) {
     case 'ADD_CARD':
@@ -6,6 +31,8 @@ export const app = (state = initialState, action) => {
         cards: [
           ...state.cards,
           {
+            id: generateID(2, 15),
+            key: randomCardKey(),
             text: action.text ,
             todos: []
           }
@@ -24,8 +51,11 @@ export const app = (state = initialState, action) => {
               todos: [
                 ...state.cards[cardIndex].todos,
                 {
+                  id: generateID(3, 9),
+                  key: randomKey(),
                   editing: false,
-                  text: action.text
+                  text: action.text,
+                  points: []
                 }
               ]
             })
@@ -97,6 +127,75 @@ export const app = (state = initialState, action) => {
           }
         })
       })
+    case 'DROP_TODO':
+      return Object.assign({}, state, {
+        cards: state.cards.map((card, cardIndex) => {
+          if(card.id === action.cardId) {
+            const newTodos = Array.from(state.cards[cardIndex].todos);
+
+            newTodos.splice(action.sourceIndex, 1);
+            newTodos.splice(action.destinationIndex, 0, state.cards[cardIndex].todos[action.sourceIndex])
+
+            return Object.assign({}, card, {
+              todos: newTodos
+            })
+          } else {
+            return card
+          }
+        })
+      })
+    case 'ADD_CHECK_POINT':
+      /* 
+        In this case i implement an action, which adds new point of particular todo
+        to display it in Popup window as checklist of check-points.
+        As previous, i find particular card that contains particular list of todos, and add new
+        check-point.
+      */
+      return Object.assign({}, state, {
+        cards: state.cards.map((card, cardIndex) => {
+          if(cardIndex === action.cardIndex) {
+            return Object.assign({}, card, {
+              todos: state.cards[cardIndex].todos.map((todo, todoIndex) => {
+                if(todoIndex === action.todoIndex) {
+                  return Object.assign({}, todo, {
+                    points: [
+                      ...state.cards[cardIndex].todos[todoIndex].points,
+                      {
+                        id: generateID(3, 8),
+                        key: randomKey(),
+                        text: action.text,
+                        editing: false
+                      }
+                    ]
+                  })
+                } else {
+                  return todo
+                }
+              })
+            })
+          } else {
+            return card
+          }
+        })
+      })
+    case 'SHOW_CHECKLIST':
+      return Object.assign({}, state, {
+        checklist: {
+          ...state.checklist,
+          hidden: false,
+          cardIndex: action.cardIndex,
+          todoIndex: action.todoIndex,
+          headline: action.todoTitle,
+          points: action.points
+        }
+      })
+    case 'HIDE_CHECKLIST':
+      return Object.assign({}, state, {
+        checklist: {
+          ...state.checklist,
+          hidden: true
+        }
+      })
     default:
       return state
   }
@@ -104,5 +203,12 @@ export const app = (state = initialState, action) => {
 
 
 const initialState = {
-  cards: []
+  cards: [],
+  checklist: {
+    hidden: true,
+    cardIndex: undefined,
+    todoIndex: undefined,
+    headline: 'default headline',
+    points: []
+  }
 }

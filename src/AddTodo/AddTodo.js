@@ -11,18 +11,20 @@ const AddTodo = ({ index, onTodoAdd }) => {
     <div onKeyPress={e => {
       if(e.key === 'Enter' && text.trim().length !== 0) {
         onTodoAdd(index, text)
+        setText('')
       }
     }}
     >
-      <Input onChange={e => setText(e.target.value)} autoFocus />
+      <Input onChange={e => setText(e.target.value)} value={text} autoFocus />
       <Button 
-      variant="outlined" 
-      color="primary" 
-      onClick={() => {
-        if(text.trim().length !== 0 ) {
-          onTodoAdd(index, text)
-        }
-      }}
+        variant="outlined" 
+        color="primary" 
+        onClick={() => {
+          if(text.trim().length !== 0 ) {
+            onTodoAdd(index, text)
+            setText('')
+          }
+        }}
       > 
         add 
       </Button>
